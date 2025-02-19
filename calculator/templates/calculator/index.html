@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finansal Hesaplama Araçları</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .result-box {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+        }
+        .feature-card {
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        .calculator-form {
+            display: none;
+        }
+        .calculator-form.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Finansal Hesaplama Araçları</h1>
+        
+        <!-- Özellik Kartları -->
+        <div class="row justify-content-center mb-5">
+            <div class="col-md-4 mb-3">
+                <div class="card feature-card" onclick="showCalculator('installment')">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Taksit Hesaplama</h5>
+                        <p class="card-text">Kredi kartı taksit ve vade farkı hesaplaması yapın.</p>
+                        <button class="btn btn-primary">Hesapla</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="card feature-card" onclick="showCalculator('interest')">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Vade Oranı Hesaplama</h5>
+                        <p class="card-text">Taksit tutarına göre vade oranı hesaplaması yapın.</p>
+                        <button class="btn btn-primary">Hesapla</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Taksit Hesaplama Formu -->
+        <div id="installmentCalculator" class="calculator-form">
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4 class="mb-0">Taksit Hesaplama</h4>
+                        </div>
+                        <div class="card-body">
+                            <form id="calculatorForm">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    <label for="amount" class="form-label">Tutar (TL)</label>
+                                    <input type="number" class="form-control" id="amount" name="amount" step="0.01" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="installments" class="form-label">Taksit Sayısı</label>
+                                    <select class="form-select" id="installments" name="number_of_installments" required>
+                                        <option value="">Taksit Sayısı Seçin</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">Hesapla</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div id="resultBox" class="result-box">
+                        <h4 class="text-center mb-3">Hesaplama Sonuçları</h4>
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <tbody>
+                                    <tr>
+                                        <th>Toplam Tutar:</th>
+                                        <td id="totalAmount">-</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Aylık Taksit:</th>
+                                        <td id="monthlyInstallment">-</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Vade Farkı:</th>
+                                        <td id="totalInterest">-</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Vade Farkı Oranı:</th>
+                                        <td id="interestRate">-</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vade Oranı Hesaplama Formu -->
+        <div id="interestCalculator" class="calculator-form">
+            <div class="row justify-content-center">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h4 class="mb-0">Vade Oranı Hesaplama</h4>
+                        </div>
+                        <div class="card-body">
+                            <form id="interestForm">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    <label for="originalAmount" class="form-label">Ana Tutar (TL)</label>
+                                    <input type="number" class="form-control" id="originalAmount" name="originalAmount" step="0.01" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="totalAmount" class="form-label">Toplam Tutar (TL)</label>
+                                    <input type="number" class="form-control" id="totalAmountInput" name="totalAmount" step="0.01" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="numberOfInstallments" class="form-label">Taksit Sayısı</label>
+                                    <input type="number" class="form-control" id="numberOfInstallments" name="numberOfInstallments" min="1" max="36" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100">Hesapla</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div id="interestResultBox" class="result-box">
+                        <h4 class="text-center mb-3">Hesaplama Sonuçları</h4>
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <tbody>
+                                    <tr>
+                                        <th>Vade Farkı Oranı:</th>
+                                        <td id="calculatedInterestRate">-</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Vade Farkı Tutarı:</th>
+                                        <td id="calculatedInterestAmount">-</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Aylık Taksit:</th>
+                                        <td id="calculatedMonthlyInstallment">-</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function showCalculator(type) {
+            // Tüm hesaplayıcıları gizle
+            document.querySelectorAll('.calculator-form').forEach(form => {
+                form.classList.remove('active');
+            });
+            
+            // Seçilen hesaplayıcıyı göster
+            document.getElementById(type + 'Calculator').classList.add('active');
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Taksit seçeneklerini yükle
+            fetch('/api/rates/')
+                .then(response => response.json())
+                .then(data => {
+                    const select = document.getElementById('installments');
+                    data.forEach(rate => {
+                        if (rate.is_active) {
+                            const option = document.createElement('option');
+                            option.value = rate.number_of_installments;
+                            option.textContent = `${rate.number_of_installments} Taksit`;
+                            select.appendChild(option);
+                        }
+                    });
+                })
+                .catch(error => console.error('Error:', error));
+
+            // Taksit hesaplama form gönderimi
+            document.getElementById('calculatorForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const amount = parseFloat(document.getElementById('amount').value);
+                const installments = parseInt(document.getElementById('installments').value);
+
+                const formData = {
+                    amount: amount.toFixed(2),
+                    number_of_installments: installments
+                };
+
+                fetch('/api/calculator/calculate/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify(formData)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => {
+                            throw new Error(err.error || 'Hesaplama sırasında bir hata oluştu');
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    document.getElementById('resultBox').style.display = 'block';
+                    document.getElementById('totalAmount').textContent = `${parseFloat(data.total_amount).toFixed(2)} TL`;
+                    document.getElementById('monthlyInstallment').textContent = `${parseFloat(data.monthly_installment).toFixed(2)} TL`;
+                    document.getElementById('totalInterest').textContent = `${parseFloat(data.total_interest).toFixed(2)} TL`;
+                    document.getElementById('interestRate').textContent = `%${parseFloat(data.interest_rate).toFixed(2)}`;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(error.message || 'Hesaplama sırasında bir hata oluştu.');
+                });
+            });
+
+            // Vade oranı hesaplama form gönderimi
+            document.getElementById('interestForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const originalAmount = parseFloat(document.getElementById('originalAmount').value);
+                const totalAmount = parseFloat(document.getElementById('totalAmountInput').value);
+                const numberOfInstallments = parseInt(document.getElementById('numberOfInstallments').value);
+
+                // Vade farkı oranı hesaplama: (1 - originalAmount/totalAmount) * 100
+                const interestRate = (1 - originalAmount/totalAmount) * 100;
+                const interestAmount = totalAmount - originalAmount;
+                const monthlyInstallment = totalAmount / numberOfInstallments;
+
+                document.getElementById('interestResultBox').style.display = 'block';
+                document.getElementById('calculatedInterestRate').textContent = `%${interestRate.toFixed(2)}`;
+                document.getElementById('calculatedInterestAmount').textContent = `${interestAmount.toFixed(2)} TL`;
+                document.getElementById('calculatedMonthlyInstallment').textContent = `${monthlyInstallment.toFixed(2)} TL`;
+            });
+        });
+    </script>
+</body>
+</html> 
